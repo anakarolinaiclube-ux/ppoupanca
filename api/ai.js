@@ -1,89 +1,170 @@
-import OpenAI from 'openai';
+module.exports = async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ result: "Método não permitido" });
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Metodo nao permitido" });
+
+  let body;
+  try {
+    body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+  } catch {
+    return res.status(400).json({ error: "Body invalido" });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "ANTHROPIC_API_KEY nao configurada" });
+
+  const mode = body.mode || "pet_reaction";
+
+  // ── MODO 1: VERIFICAR COMPROVANTE (PDF ou imagem) ──────────────────
+  if (mode === "verify_pdf") {
+    const { pdf, image, imageType, expectedMin = 30 } = body;
+
+    if (!pdf && !image) {
+      return res.status(400).json({ error: "Envie pdf ou image em base64" });
+    }
+
+    const prompt = "Voce eh um analisador de comprovantes e extratos bancarios brasileiros. Analise o documento e responda APENAS com JSON valido sem markdown. Procure: depositos em poupanca, transferencias PIX para conta propria, qualquer movimentacao que indique que o usuario GUARDOU dinheiro (nao compras ou gastos). Formato obrigatorio: {\"found\": true ou false, \"amount\": numero em reais ou null, \"description\": \"descricao curta\" ou null, \"confidence\": \"high\" ou \"medium\" ou \"low\"}. Se nao for comprovante bancario: found=false. Confidence low = ilegivel ou muito incerto. Valor minimo esperado: R$ " + expectedMin;
+
+    // monta o content dependendo do tipo de arquivo
+    let contentSource;
+    if (pdf) {
+      contentSource = { type: "document", source: { type: "base64", media_type: "application/pdf", data: pdf } };
+    } else {
+      const mime = imageType || "image/jpeg";
+      contentSource = { type: "image", source: { type: "base64", media_type: mime, data: image } };
     }
 
     try {
-        const { cigsPerDay, packPrice, startDate } = req.body;
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 300,
+          messages: [{
+            role: "user",
+            content: [
+              contentSource,
+              { type: "text", text: prompt }
+            ]
+          }]
+        }),
+      });
 
-        // 1. Cálculos Matemáticos
-        const start = new Date(startDate);
-        const now = new Date();
-        const diffTime = Math.abs(now - start);
-        const daysSmokeFree = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      if (!response.ok) {
+        const err = await response.text();
+        console.error("Anthropic error verify:", err);
+        return res.status(502).json({ error: "Erro Anthropic: " + err.slice(0, 300) });
+      }
 
-        const cigsNotSmoked = daysSmokeFree * parseInt(cigsPerDay);
-        const pricePerCig = parseFloat(packPrice) / 20; // Maço padrão de 20
-        const totalSaved = cigsNotSmoked * pricePerCig;
-        
-        // Projeções
-        const dailyCost = parseInt(cigsPerDay) * pricePerCig;
-        const monthlySavings = dailyCost * 30;
-        const yearlySavings = dailyCost * 365;
+      const data = await response.json();
+      const raw = (data?.content?.[0]?.text ?? "{}").replace(/```json|```/g, "").trim();
 
-        // Formatação BRL
-        const fmt = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        console.error("JSON parse fail:", raw);
+        return res.status(200).json({
+          verified: false, amount: null,
+          message: "Nao consegui ler o comprovante. Tente uma imagem mais nitida."
+        });
+      }
 
-        // 2. Chamada OpenAI para Mensagem de Reforço
-        let aiMessage = "Continue firme! Sua saúde e seu bolso agradecem.";
-        
-        if (process.env.OPENAI_API_KEY) {
-            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-            
-            const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini", // Modelo rápido e eficiente
-                messages: [
-                    {
-                        role: "system", 
-                        content: "Você é um assistente motivacional para ex-fumantes. Responda em Português do Brasil. Seja breve (máximo 1 frase)."
-                    },
-                    {
-                        role: "user",
-                        content: `O usuário não fuma há ${daysSmokeFree} dias. Economizou ${fmt(totalSaved)}. Deixou de fumar ${cigsNotSmoked} cigarros. Dê uma mensagem de parabéns focada na saúde ou na liberdade.`
-                    }
-                ],
-                max_tokens: 60,
-            });
-            aiMessage = completion.choices[0].message.content;
-        }
+      const verified =
+        parsed.found === true &&
+        typeof parsed.amount === "number" &&
+        parsed.amount >= expectedMin &&
+        parsed.confidence !== "low";
 
-        // 3. Montagem do HTML de resposta
-        const htmlResponse = `
-            <div class="result-card">
-                <div>Você economizou até agora:</div>
-                <span class="highlight">${fmt(totalSaved)}</span>
-                
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-label">Cigarros evitados</span>
-                        <span class="stat-value">${cigsNotSmoked}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Dias sem fumar</span>
-                        <span class="stat-value">${daysSmokeFree}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Economia Mensal</span>
-                        <span class="stat-value">${fmt(monthlySavings)}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Economia Anual</span>
-                        <span class="stat-value">${fmt(yearlySavings)}</span>
-                    </div>
-                </div>
+      let message;
+      if (verified) {
+        message = "Comprovante aceito! " + (parsed.description || "Deposito de R$" + parsed.amount.toFixed(2) + " identificado.");
+      } else if (parsed.found && typeof parsed.amount === "number" && parsed.amount < expectedMin) {
+        message = "Encontrei R$" + parsed.amount.toFixed(2) + ", mas a meta minima e R$" + expectedMin + ". Guarde mais!";
+      } else {
+        message = "Nao encontrei deposito ou poupanca valida neste comprovante.";
+      }
 
-                <div class="ai-message">
-                    "${aiMessage}"
-                </div>
-            </div>
-        `;
+      return res.status(200).json({
+        verified,
+        amount: parsed.found ? parsed.amount : null,
+        description: parsed.description || null,
+        confidence: parsed.confidence || null,
+        message
+      });
 
-        return res.status(200).json({ result: htmlResponse });
-
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ result: "<p>Erro ao processar dados.</p>" });
+    } catch (err) {
+      console.error("Fetch error verify:", err.message);
+      return res.status(500).json({ error: "Erro interno: " + err.message });
     }
-}
+  }
+
+  // ── MODO 2: FALA DO PET ────────────────────────────────────────────
+  const { health = 100, balance = 0, streak = 0, daysLeft = 30,
+          event = "none", monthlyGoal = 30, fedThisMonth = 0, petType = "cat" } = body;
+
+  const petNames = { cat: "Mingau", dog: "Farofa", bunny: "Bolinha" };
+  const petDesc  = { cat: "gato", dog: "cachorro", bunny: "coelho" };
+  const name = petNames[petType] || "Poupinzinho";
+  const desc = petDesc[petType]  || "pet";
+
+  const events = {
+    start:               "app abriu",
+    deposit:             "dono depositou com comprovante VALIDADO - comemore!",
+    deposit_rejected:    "comprovante REJEITADO - nao era poupanca valida",
+    deposit_below_min:   "comprovante ok mas valor abaixo da meta",
+    month_passed_no_feed:"mes virou sem meta batida - CRISE",
+    month_passed_fed:    "mes virou com meta batida - celebracao",
+    goal_changed:        "meta atualizada",
+    revive:              "pet ressuscitado",
+  };
+
+  const isDrama = ["deposit_rejected", "deposit_below_min", "month_passed_no_feed"].includes(event);
+
+  const prompt = [
+    "Voce e " + name + ", um " + desc + " virtual fofo e dramatico de um app de poupanca. Fale na primeira pessoa.",
+    "Vida=" + Math.round(health) + "%, Saldo=R$" + Number(balance).toFixed(2) +
+      ", Meta=R$" + monthlyGoal + ", Guardado este mes=R$" + Number(fedThisMonth).toFixed(2) +
+      ", Sequencia=" + streak + " meses, Dias restantes=" + daysLeft + ".",
+    "Evento: " + (events[event] || event),
+    isDrama ? "INSTRUCAO: Drama maximo! MAIUSCULAS, reticencias, apelos emotivos." : "",
+    "Responda com 1-2 frases curtas em portugues informal. Criativo e engracado. Sem hashtags."
+  ].filter(Boolean).join(" ");
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 140,
+        messages: [{ role: "user", content: prompt }]
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("Anthropic error pet:", err);
+      return res.status(502).json({ error: "Erro Anthropic: " + err.slice(0, 300) });
+    }
+
+    const data = await response.json();
+    return res.status(200).json({ message: data?.content?.[0]?.text?.trim() || "..." });
+
+  } catch (err) {
+    console.error("Fetch error pet:", err.message);
+    return res.status(500).json({ error: "Erro interno: " + err.message });
+  }
+};
