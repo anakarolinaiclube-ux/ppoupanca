@@ -1,7 +1,7 @@
 {
-  "name": "petpoupanca-backend",
+  "name": "petpoupanca-app",
   "version": "1.0.0",
-  "description": "Backend IA para PetPoupança",
+  "description": "App PetPoupança com OpenAI",
   "dependencies": {
     "openai": "^4.28.0",
     "pdf-parse": "^1.1.1"
