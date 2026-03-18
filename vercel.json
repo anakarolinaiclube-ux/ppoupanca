@@ -1,7 +1,11 @@
 {
-  "functions": {
-    "api/ai.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  "version": 2,
+  "builds":[
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" }
+  ],
+  "routes":[
+    { "src": "/api/ai", "dest": "/api/ai.js" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
 }
