@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PetPoupança</title>
+  <title>PetPoupança App</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -11,30 +11,24 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      /* Light Theme Moderno */
       --bg:         #f8fafc;
       --surface:    #ffffff;
       --surface2:   #f1f5f9;
       --surface3:   #e2e8f0;
       --border:     rgba(15, 23, 42, 0.08);
       --border-md:  rgba(15, 23, 42, 0.15);
-      
-      /* Cores de destaque */
       --accent:     #6366f1; 
       --accent-dim: rgba(99, 102, 241, 0.1);
       --accent-glow:rgba(99, 102, 241, 0.25);
-      
       --green:      #10b981;
       --green-dim:  rgba(16, 185, 129, 0.15);
       --red:        #ef4444;
       --red-dim:    rgba(239, 68, 68, 0.12);
       --amber:      #f59e0b;
       --amber-dim:  rgba(245, 158, 11, 0.15);
-      
       --text:       #0f172a;
       --text-2:     #475569;
       --text-3:     #64748b;
-      
       --radius-sm:  12px;
       --radius:     20px;
       --radius-lg:  28px;
@@ -468,7 +462,6 @@
 </head>
 <body>
 
-<!-- ══════════════════════════ AVATAR PICKER ══════════════════════════ -->
 <div id="avatar-picker">
   <div class="ap-card">
     <div class="ap-eyebrow">bem-vindo</div>
@@ -499,7 +492,6 @@
   </div>
 </div>
 
-<!-- ══════════════════════════ APP ══════════════════════════ -->
 <header>
   <div class="header-eyebrow">seu cofre vivo</div>
   <h1>PetPoupança</h1>
@@ -508,7 +500,6 @@
 
 <div class="app">
 
-  <!-- PET CARD -->
   <div class="card pet-card" id="pet-card">
     <div class="dead-overlay" id="dead-overlay">
       <div class="dead-glyph">✦</div>
@@ -534,7 +525,6 @@
     <div class="bubble" id="bubble">…</div>
   </div>
 
-  <!-- STATS -->
   <div class="stats-row">
     <div class="stat">
       <div class="stat-val" id="stat-saldo">R$0</div>
@@ -550,7 +540,6 @@
     </div>
   </div>
 
-  <!-- CALENDAR STRIP -->
   <div class="cal-strip">
     <div class="cal-header">
       <span class="cal-month" id="cal-month">março 2026</span>
@@ -559,11 +548,9 @@
     <div class="cal-dots" id="cal-dots"></div>
   </div>
 
-  <!-- ACTIONS CARD -->
   <div class="card actions-card">
     <div class="section-label">alimentar</div>
 
-    <!-- goal strip -->
     <div class="goal-strip">
       <div class="goal-strip-top">
         <span class="goal-strip-amounts" id="goal-amounts">R$0 / R$300</span>
@@ -586,7 +573,6 @@
       </div>
     </div>
 
-    <!-- pdf upload -->
     <div class="pdf-drop" id="pdf-drop"
          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
       <input type="file" accept="application/pdf" id="pdf-input" onchange="onFileChange(event)" />
@@ -610,19 +596,14 @@
     <div class="month-chip" id="month-chip">nenhum depósito validado este mês</div>
   </div>
 
-  <!-- BOTAO DE RESET (Para testar o layout de escolha de pets) -->
   <button class="btn-reset" onclick="resetApp()">Zerar dados e escolher outro pet</button>
 
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════════════
-// CONSTANTS
-// ════════════════════════════════════════
 const LOCK_MS = 3 * 24 * 60 * 60 * 1000;
 
-// Novos Nomes dos Pets Especiais
 const PET_NAMES = { platypus: 'Darwin', horse: 'Trovão', bird: 'Pistache' };
 const EVO_STAGES =[
   { label: 'filhote',   minStreak: 0, scale: 0.55 },
@@ -632,9 +613,6 @@ const EVO_STAGES =[
   { label: 'imponente', minStreak: 9, scale: 1.15 },
 ];
 
-// ════════════════════════════════════════
-// PERSIST
-// ════════════════════════════════════════
 function load(key, def) {
   try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; }
   catch { return def; }
@@ -643,9 +621,6 @@ function save(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
-// ════════════════════════════════════════
-// STATE  (persisted)
-// ════════════════════════════════════════
 let cfg = load('pp_cfg', {
   petType:      null,
   monthlyGoal:  300,
@@ -668,7 +643,6 @@ function persist() {
   save('pp_state', st);
 }
 
-// FUNÇÃO PARA RESETAR O APP PARA TESTES
 function resetApp() {
   if(confirm("Tem certeza? Isso vai apagar todo o seu progresso e saldo para você recomeçar com outro pet.")) {
     localStorage.removeItem('pp_cfg');
@@ -677,9 +651,6 @@ function resetApp() {
   }
 }
 
-// ════════════════════════════════════════
-// TIME HELPERS
-// ════════════════════════════════════════
 function todayKey()     { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
 function daysInMonth()  { const d=new Date(); return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
 function dayOfMonth()   { return new Date().getDate(); }
@@ -711,9 +682,6 @@ function applyDecay() {
   persist();
 }
 
-// ════════════════════════════════════════
-// AVATAR PICKER
-// ════════════════════════════════════════
 let selectedPetType = 'platypus';
 
 function selectPet(el) {
@@ -732,116 +700,91 @@ function confirmPicker() {
   initApp();
 }
 
-// ════════════════════════════════════════
-// PET DRAWING (Especiais Fofinhos)
-// ════════════════════════════════════════
 function getEvoStage(streak) {
   let stage = EVO_STAGES[0];
   for (const s of EVO_STAGES) { if (streak >= s.minStreak) stage = s; }
   return stage;
 }
 
-/* ── ORNITORRINCO (Platypus) ── */
 function drawPlatypus(ctx, cx, cy, sz, mood) {
   const s = sz;
   const body = mood==='dead'?'#cbd5e1':mood==='happy'?'#2dd4bf':mood==='worried'?'#5eead4':'#14b8a6';
   const bill = mood==='dead'?'#94a3b8':'#fb923c';
   const tail = mood==='dead'?'#64748b':'#78350f';
 
-  // Cauda de castor (achatada e para o lado)
   ctx.fillStyle = tail;
   ctx.beginPath(); ctx.ellipse(cx+s*0.35, cy+s*0.25, s*0.2, s*0.08, Math.PI/5, 0, Math.PI*2); ctx.fill();
 
-  // Corpo redondo
   ctx.fillStyle = body;
   ctx.beginPath(); ctx.ellipse(cx, cy+s*0.2, s*0.35, s*0.25, 0, 0, Math.PI*2); ctx.fill();
 
-  // Cabeça
   ctx.beginPath(); ctx.arc(cx, cy+s*0.02, s*0.26, 0, Math.PI*2); ctx.fill();
 
-  // Bico de Pato Achatado (Desenhado antes do rosto)
   ctx.fillStyle = bill;
   ctx.beginPath(); ctx.ellipse(cx, cy+s*0.14, s*0.2, s*0.1, 0, 0, Math.PI*2); ctx.fill();
   
-  // Detalhe no bico (linha suave no meio)
   ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth=s*0.015;
   ctx.beginPath(); ctx.moveTo(cx-s*0.1, cy+s*0.12); ctx.lineTo(cx+s*0.1, cy+s*0.12); ctx.stroke();
 
   _drawFace(ctx, cx, cy, s, mood, 'platypus');
 }
 
-/* ── CAVALO ── */
 function drawHorse(ctx, cx, cy, sz, mood) {
   const s = sz;
   const body = mood==='dead'?'#d6d3d1':mood==='happy'?'#d97706':mood==='worried'?'#fcd34d':'#b45309';
   const mane = mood==='dead'?'#78716c':'#451a03';
   const snout = mood==='dead'?'#e7e5e4':'#fde68a';
 
-  // Cauda esvoaçante
   ctx.strokeStyle = mane; ctx.lineWidth=s*0.12; ctx.lineCap='round';
   ctx.beginPath(); ctx.moveTo(cx+s*0.28, cy+s*0.15); 
   ctx.quadraticCurveTo(cx+s*0.5, cy+s*0.2, cx+s*0.38, cy+s*0.38); ctx.stroke();
 
-  // Corpo
   ctx.fillStyle = body;
   ctx.beginPath(); ctx.ellipse(cx, cy+s*0.28, s*0.32, s*0.25, 0, 0, Math.PI*2); ctx.fill();
 
-  // Crina (nas costas do pescoço)
   ctx.fillStyle = mane;
   ctx.beginPath(); ctx.ellipse(cx-s*0.15, cy-s*0.05, s*0.12, s*0.25, -0.2, 0, Math.PI*2); ctx.fill();
 
-  // Cabeça (alongada)
   ctx.fillStyle = body;
   ctx.beginPath(); ctx.ellipse(cx, cy, s*0.24, s*0.32, 0.05, 0, Math.PI*2); ctx.fill();
 
-  // Orelhas pontudas
   ctx.beginPath(); ctx.moveTo(cx-s*0.15, cy-s*0.2); ctx.lineTo(cx-s*0.2, cy-s*0.4); ctx.lineTo(cx-s*0.05, cy-s*0.3); ctx.fill();
   ctx.beginPath(); ctx.moveTo(cx+s*0.05, cy-s*0.3); ctx.lineTo(cx+s*0.15, cy-s*0.42); ctx.lineTo(cx+s*0.18, cy-s*0.2); ctx.fill();
 
-  // Focinho
   ctx.fillStyle = snout;
   ctx.beginPath(); ctx.ellipse(cx, cy+s*0.18, s*0.18, s*0.16, 0, 0, Math.PI*2); ctx.fill();
 
-  // Narinas
   ctx.fillStyle = mood==='dead'?'#a8a29e':'#78350f';
   ctx.beginPath(); ctx.ellipse(cx-s*0.06, cy+s*0.18, s*0.02, s*0.03, -0.2, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(cx+s*0.06, cy+s*0.18, s*0.02, s*0.03, 0.2, 0, Math.PI*2); ctx.fill();
 
-  // No cavalo, subimos um pouco a altura dos olhos para o focinho se destacar embaixo
   _drawFace(ctx, cx, cy-s*0.04, s*0.9, mood, 'horse');
 }
 
-/* ── PÁSSARO (Bird) ── */
 function drawBird(ctx, cx, cy, sz, mood) {
   const s = sz;
   const body = mood==='dead'?'#cbd5e1':mood==='happy'?'#38bdf8':mood==='worried'?'#bae6fd':'#0284c7';
   const belly = mood==='dead'?'#f1f5f9':'#e0f2fe';
   const beak = mood==='dead'?'#94a3b8':'#fbbf24';
 
-  // Peninhas do rabo
   ctx.fillStyle = body;
   ctx.beginPath(); ctx.ellipse(cx+s*0.25, cy+s*0.25, s*0.15, s*0.05, Math.PI/4, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(cx+s*0.28, cy+s*0.2, s*0.15, s*0.05, Math.PI/6, 0, Math.PI*2); ctx.fill();
 
-  // Corpo principal (redondão)
   ctx.beginPath(); ctx.arc(cx, cy+s*0.12, s*0.32, 0, Math.PI*2); ctx.fill();
 
-  // Barriguinha gordinha
   ctx.fillStyle = belly;
   ctx.beginPath(); ctx.arc(cx, cy+s*0.16, s*0.26, 0, Math.PI); ctx.fill();
 
-  // Asinhas nas laterais
   ctx.fillStyle = body;
   ctx.beginPath(); ctx.ellipse(cx-s*0.26, cy+s*0.1, s*0.06, s*0.16, 0.2, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(cx+s*0.26, cy+s*0.1, s*0.06, s*0.16, -0.2, 0, Math.PI*2); ctx.fill();
 
-  // Topetinho estiloso
   ctx.beginPath(); ctx.ellipse(cx, cy-s*0.22, s*0.04, s*0.08, -0.2, 0, Math.PI*2); ctx.fill();
   ctx.beginPath(); ctx.ellipse(cx+s*0.05, cy-s*0.2, s*0.03, s*0.06, 0.2, 0, Math.PI*2); ctx.fill();
 
   _drawFace(ctx, cx, cy-s*0.02, s, mood, 'bird');
 
-  // Bico triangular (Desenhado por cima da face)
   ctx.fillStyle = beak;
   ctx.beginPath();
   if (mood==='worried' || mood==='dying') {
@@ -852,13 +795,11 @@ function drawBird(ctx, cx, cy, sz, mood) {
   ctx.fill();
 }
 
-/* ── SHARED FACE ── */
 function _drawFace(ctx, cx, cy, s, mood, type) {
   const eyeY = cy; 
 
-  // Bochechas coradas
   if (mood!=='dead') {
-    ctx.fillStyle='rgba(251, 113, 133, 0.25)'; // rosinha sutil
+    ctx.fillStyle='rgba(251, 113, 133, 0.25)';
     ctx.beginPath(); ctx.ellipse(cx-s*0.15,eyeY+s*0.06,s*0.07,s*0.04,0,0,Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.ellipse(cx+s*0.15,eyeY+s*0.06,s*0.07,s*0.04,0,0,Math.PI*2); ctx.fill();
   }
@@ -876,7 +817,6 @@ function _drawFace(ctx, cx, cy, s, mood, type) {
     ctx.beginPath(); ctx.arc(cx-s*0.12,eyeY,s*0.06,0,Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(cx+s*0.12,eyeY,s*0.06,0,Math.PI*2); ctx.fill();
     
-    // brilho fofinho
     ctx.fillStyle='#ffffff'; 
     ctx.beginPath(); ctx.arc(cx-s*0.14,eyeY-s*0.02,s*0.02,0,Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(cx+s*0.10,eyeY-s*0.02,s*0.02,0,Math.PI*2); ctx.fill();
@@ -893,7 +833,6 @@ function _drawFace(ctx, cx, cy, s, mood, type) {
     ctx.beginPath(); ctx.moveTo(cx-s*0.18,eyeY-s*0.08); ctx.lineTo(cx-s*0.08,eyeY-s*0.05); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(cx+s*0.18,eyeY-s*0.08); ctx.lineTo(cx+s*0.08,eyeY-s*0.05); ctx.stroke();
   } else {
-    // dying
     ctx.fillStyle=eyeColor;
     ctx.beginPath(); ctx.arc(cx-s*0.12,eyeY,s*0.05,0,Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(cx+s*0.12,eyeY,s*0.05,0,Math.PI*2); ctx.fill();
@@ -903,8 +842,6 @@ function _drawFace(ctx, cx, cy, s, mood, type) {
     ctx.beginPath(); ctx.rect(cx-s*0.2,eyeY-s*0.06,s*0.4,s*0.06); ctx.fill(); 
   }
 
-  // O Pássaro e o Ornitorrinco já possuem bicos próprios, então pulamos a boquinha padrão.
-  // Somente o cavalo ganha o risco de boca.
   if (type !== 'platypus' && type !== 'bird') {
     ctx.strokeStyle=eyeColor; ctx.lineWidth=s*0.025; ctx.lineCap='round';
     const mouthY = type==='horse' ? cy+s*0.26 : cy+s*0.14; 
@@ -951,17 +888,12 @@ function renderPet(canvasEl, petType, health, dead, scaleFactor) {
   else if (petType==='bird')     drawBird    (ctx, cx, cy, sz, mood);
 }
 
-// Draw previews in picker
-function drawPreviews() {
-  ['platypus','horse','bird'].forEach(p => {
+function drawPreviews() {['platypus','horse','bird'].forEach(p => {
     const c = document.getElementById(`preview-${p}`);
     if (c) renderPet(c, p, 100, false, 1);
   });
 }
 
-// ════════════════════════════════════════
-// GOAL LOCK
-// ════════════════════════════════════════
 function isLocked() { return cfg.goalLockedAt && (Date.now()-cfg.goalLockedAt) < LOCK_MS; }
 function lockRemaining() {
   if (!cfg.goalLockedAt) return '';
@@ -1002,9 +934,6 @@ function saveGoal() {
   showToast(`meta atualizada para R$${Math.round(v)} — bloqueada por 3 dias`);
 }
 
-// ════════════════════════════════════════
-// UI UPDATE
-// ════════════════════════════════════════
 function updateUI() {
   const h   = st.health;
   const rem = daysRemaining();
@@ -1064,9 +993,6 @@ function updateUI() {
   updateCalendar();
 }
 
-// ════════════════════════════════════════
-// CALENDAR STRIP
-// ════════════════════════════════════════
 function updateCalendar() {
   const total  = daysInMonth();
   const today  = dayOfMonth();
@@ -1093,9 +1019,6 @@ function updateCalendar() {
   }
 }
 
-// ════════════════════════════════════════
-// AI BUBBLE
-// ════════════════════════════════════════
 async function fetchBubble(event) {
   const el = document.getElementById('bubble');
   el.textContent='…'; el.classList.add('loading');
@@ -1128,9 +1051,6 @@ function fallback() {
   return 'PELO AMOR, ME ALIMENTA!';
 }
 
-// ════════════════════════════════════════
-// PDF UPLOAD
-// ════════════════════════════════════════
 let pdfB64 = null;
 function onDragOver(e) { e.preventDefault(); document.getElementById('pdf-drop').classList.add('dragover'); }
 function onDragLeave()  { document.getElementById('pdf-drop').classList.remove('dragover'); }
@@ -1162,28 +1082,38 @@ function clearPdf() {
 }
 
 // ════════════════════════════════════════
-// VERIFY PDF
+// VERIFY PDF (CORRIGIDO PARA MOSTRAR ERROS E LER OPENAI)
 // ════════════════════════════════════════
 async function verifyPdf() {
   if (st.dead)  { showToast('ressuscite o pet primeiro'); return; }
   if (!pdfB64)  { showToast('selecione um PDF'); return; }
 
-  const btn=document.getElementById('btn-verify');
-  btn.textContent='verificando…'; btn.disabled=true;
+  const btn = document.getElementById('btn-verify');
+  btn.textContent = 'verificando…'; 
+  btn.disabled = true;
 
-  const box=document.getElementById('verify-result');
-  box.className='verify-result';
+  const box = document.getElementById('verify-result');
+  box.className = 'verify-result';
 
   try {
     const res = await fetch('/api/ai', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ mode:'verify_pdf', pdf:pdfB64, expectedMin:cfg.monthlyGoal }),
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'verify_pdf', pdf: pdfB64, expectedMin: cfg.monthlyGoal }),
     });
-    const data = await res.json();
-    box.textContent = data.message;
+    
+    // Se a Vercel der erro 500 (falta de API KEY, falha na pasta API, etc)
+    if (!res.ok) {
+      throw new Error(`Erro do Servidor (Vercel): Código ${res.status}`);
+    }
 
+    const data = await res.json();
+    
+    // Sucesso - Valor achado e bate com a meta
     if (data.verified && data.amount) {
-      box.className='verify-result visible ok';
+      box.className = 'verify-result visible ok';
+      box.textContent = data.message || `Depósito de R$${data.amount} validado!`;
+      
       const val = data.amount;
       st.balance         += val;
       st.fedAmountMonth  += val;
@@ -1201,25 +1131,29 @@ async function verifyPdf() {
       }
       persist(); updateUI(); fetchBubble('deposit'); clearPdf();
 
-    } else if (data.amount !== null && data.amount < cfg.monthlyGoal) {
-      box.className='verify-result visible warn';
+    // Sucesso - Leu o PDF, mas o valor é menor que a meta (ex: 2 reais)
+    } else if (data.amount !== null && data.amount !== undefined && data.amount < cfg.monthlyGoal) {
+      box.className = 'verify-result visible warn';
+      box.textContent = data.message || `Depósito de R$${data.amount} é muito baixo! Faltam R$${cfg.monthlyGoal - data.amount}`;
       persist(); fetchBubble('deposit_below_min');
+      
+    // Erro - IA não conseguiu ler valor ou negou o comprovante
     } else {
-      box.className='verify-result visible err';
+      box.className = 'verify-result visible err';
+      box.textContent = data.message || data.error || 'A IA recusou este comprovante ou o arquivo está ilegível.';
       fetchBubble('deposit_rejected');
     }
-  } catch {
-    box.textContent='Erro ao verificar. Tente novamente.';
-    box.className='verify-result visible err';
+    
+  } catch (err) {
+    console.error("Erro na verificação:", err);
+    box.textContent = 'Erro ao se conectar com a IA. Verifique se a chave da OpenAI está correta na Vercel.';
+    box.className = 'verify-result visible err';
   } finally {
-    btn.textContent='verificar e alimentar';
+    btn.textContent = 'verificar e alimentar';
     btn.disabled = !pdfB64;
   }
 }
 
-// ════════════════════════════════════════
-// REVIVE
-// ════════════════════════════════════════
 function revive() {
   if (st.balance >= 50) st.balance -= 50;
   st.dead=false; st.health=30; st.streak=0;
@@ -1228,9 +1162,6 @@ function revive() {
   showToast('pet ressuscitado — cuide melhor desta vez');
 }
 
-// ════════════════════════════════════════
-// TOAST
-// ════════════════════════════════════════
 let _toTO=null;
 function showToast(msg) {
   const t=document.getElementById('toast');
@@ -1238,9 +1169,6 @@ function showToast(msg) {
   clearTimeout(_toTO); _toTO=setTimeout(()=>t.classList.remove('show'),3200);
 }
 
-// ════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════
 function initApp() {
   checkMonthRollover();
   applyDecay();
