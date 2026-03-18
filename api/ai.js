@@ -1,7 +1,7 @@
 const { OpenAI } = require('openai');
 const pdfParse = require('pdf-parse');
 
-// Inicializa a OpenAI puxando a chave da Vercel
+// Inicializa a OpenAI puxando a chave da Vercel (OPENAI_API_KEY)
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -29,8 +29,8 @@ module.exports = async function handler(req, res) {
       Seja engraçado, faça chantagem emocional fofa. Se a saúde estiver baixa, seja muito dramático implorando por dinheiro/comida.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini", // Modelo super rápido e inteligente
-        messages: [{ role: "system", content: prompt }],
+        model: "gpt-4o-mini", // Modelo rápido e barato da OpenAI
+        messages:[{ role: "system", content: prompt }],
         max_tokens: 60,
       });
 
@@ -42,14 +42,14 @@ module.exports = async function handler(req, res) {
     // ==========================================
     if (body.mode === 'verify_pdf') {
       
-      // 1. Transforma o Base64 que veio do Frontend em um Buffer (arquivo legível)
+      // 1. Transforma o Base64 que veio do Frontend em um arquivo legível
       const pdfBuffer = Buffer.from(body.pdf, 'base64');
       
-      // 2. Extrai todo o texto do PDF
+      // 2. Extrai todo o texto do PDF usando a biblioteca pdf-parse
       const pdfData = await pdfParse(pdfBuffer);
       const pdfText = pdfData.text;
 
-      // 3. Pede para a OpenAI ler o texto extraído e procurar o valor do comprovante
+      // 3. Pede para a OpenAI ler o texto extraído
       const prompt = `Você é um auditor financeiro rigoroso e divertido.
       Leia este texto extraído de um PDF de comprovante bancário:
       
@@ -64,7 +64,7 @@ module.exports = async function handler(req, res) {
       {
         "verified": true (se for um comprovante válido) ou false (se for inválido ou não achar valor),
         "amount": (apenas o número do valor transferido, ex: 25.50. Se não achar, coloque null),
-        "message": "Uma frase curta e divertida como se fosse o Pet analisando o comprovante."
+        "message": "Uma frase curta dizendo se aceitou ou rejeitou, de forma divertida."
       }`;
 
       const response = await openai.chat.completions.create({
